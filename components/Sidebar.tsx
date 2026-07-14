@@ -230,7 +230,7 @@ export function Sidebar({
             <BookmarkIcon className="size-4.5" />
           </div>
           <span className="font-heading text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Antigravity
+            Bookmark Manager
           </span>
         </div>
 

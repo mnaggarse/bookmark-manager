@@ -8,10 +8,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { loginWithGoogle } from "@/lib/firebase";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  loginWithEmail,
+  loginWithGoogle,
+  signupWithEmail,
+} from "@/lib/firebase";
+import { cn } from "@/lib/utils";
 import {
   BookmarkIcon,
   CloudLightningIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockIcon,
+  MailIcon,
   ShieldCheckIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -19,6 +30,36 @@ import { useState } from "react";
 export function AuthScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const getFriendlyErrorMessage = (err: any): string => {
+    const code = err?.code;
+    switch (code) {
+      case "auth/email-already-in-use":
+        return "This email is already registered. Please log in instead.";
+      case "auth/invalid-email":
+        return "Please enter a valid email address.";
+      case "auth/weak-password":
+        return "Your password is too weak. It must be at least 6 characters.";
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+      case "auth/invalid-credential":
+        return "Invalid email or password. Please try again.";
+      case "auth/network-request-failed":
+        return "Network connection failed. Please check your internet connection.";
+      case "auth/too-many-requests":
+        return "Too many failed login attempts. Please try again later.";
+      default:
+        return (
+          err?.message || "An unexpected error occurred. Please try again."
+        );
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -38,6 +79,43 @@ export function AuthScreen() {
     }
   };
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validation
+    if (!email.trim() || !password.trim()) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (mode === "signup" && password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (mode === "login") {
+        await loginWithEmail(email.trim(), password);
+      } else {
+        await signupWithEmail(email.trim(), password);
+      }
+    } catch (err: any) {
+      console.error(`${mode === "login" ? "Login" : "Sign Up"} Error:`, err);
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
       {/* Background decorative blobs */}
@@ -51,18 +129,179 @@ export function AuthScreen() {
           </div>
           <div className="flex flex-col gap-1.5">
             <CardTitle className="text-3xl font-bold tracking-tight">
-              Antigravity Bookmarks
+              Bookmark Manager
             </CardTitle>
             <CardDescription className="text-balance text-zinc-500 dark:text-zinc-400">
               A premium, synchronized space for all your bookmarks.
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-6">
+        <CardContent className="flex flex-col gap-5">
+          {/* Tab Control */}
+          <div className="flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800">
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => {
+                setMode("login");
+                setError(null);
+              }}
+              className={cn(
+                "flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 cursor-pointer disabled:cursor-not-allowed",
+                mode === "login"
+                  ? "bg-white text-zinc-950 shadow-xs dark:bg-zinc-700 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white",
+              )}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => {
+                setMode("signup");
+                setError(null);
+              }}
+              className={cn(
+                "flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 cursor-pointer disabled:cursor-not-allowed",
+                mode === "signup"
+                  ? "bg-white text-zinc-950 shadow-xs dark:bg-zinc-700 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white",
+              )}
+            >
+              Sign up
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleEmailAuth} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <div className="relative">
+                <MailIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 h-11 rounded-xl focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 dark:focus:border-white dark:focus:ring-white"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <LockIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 h-11 rounded-xl focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 dark:focus:border-white dark:focus:ring-white"
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="size-4" />
+                  ) : (
+                    <EyeIcon className="size-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {mode === "signup" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <div className="relative">
+                  <LockIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10 h-11 rounded-xl focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 dark:focus:border-white dark:focus:ring-white"
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="mt-2 h-11 w-full rounded-xl bg-zinc-900 text-white font-medium hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <svg
+                    className="size-4 animate-spin text-current"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span>
+                    {mode === "login" ? "Logging in..." : "Creating account..."}
+                  </span>
+                </>
+              ) : (
+                <span>{mode === "login" ? "Login" : "Sign Up"}</span>
+              )}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white/80 px-2 text-zinc-400 dark:bg-zinc-900/80 dark:text-zinc-500">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
           <Button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 text-white shadow-md hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-zinc-900 shadow-xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-900 cursor-pointer disabled:cursor-not-allowed"
           >
             <svg
               className="size-5"
@@ -88,7 +327,7 @@ export function AuthScreen() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            {isLoading ? "Signing in..." : "Continue with Google"}
+            <span>Google</span>
           </Button>
 
           {error && (

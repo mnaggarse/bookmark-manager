@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Antigravity Bookmarks - Synced Bookmark Manager",
+  title: "Bookmark Manager - Synced Bookmark Manager",
   description:
     "A premium, fully synchronized bookmark manager with nested folders, tags, and reading estimates.",
 };
