@@ -28,8 +28,10 @@ import {
 import { useEffect, useState } from "react";
 import { BookmarkDialog } from "./BookmarkDialog";
 import { BookmarkList } from "./BookmarkList";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { FolderDialog } from "./FolderDialog";
 import { Sidebar } from "./Sidebar";
+import { logout } from "@/lib/firebase";
 
 interface DashboardProps {
   user: User;
@@ -80,6 +82,82 @@ export function Dashboard({ user }: DashboardProps) {
   >(null);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Confirm Dialog configuration state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    actionLabel?: string;
+    cancelLabel?: string;
+    onConfirm: () => void | Promise<void>;
+    isDestructive?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const handleDeleteFolderClick = (id: string) => {
+    const folder = folders.find((f) => f.id === id);
+    const folderName = folder ? folder.name : "this folder";
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Folder?",
+      description: `Are you sure you want to delete "${folderName}"? All subfolders will be moved to the root, and bookmarks inside will be moved to no folder. This action cannot be undone.`,
+      actionLabel: "Delete Folder",
+      isDestructive: true,
+      onConfirm: async () => {
+        await deleteFolder(id);
+      },
+    });
+  };
+
+  const handleDeleteBookmarkClick = (id: string, permanently: boolean) => {
+    if (permanently) {
+      const bookmark = bookmarks.find((b) => b.id === id);
+      const bookmarkTitle = bookmark ? bookmark.title : "this bookmark";
+      setConfirmConfig({
+        isOpen: true,
+        title: "Delete Bookmark?",
+        description: `Are you sure you want to permanently delete "${bookmarkTitle}"? This action cannot be undone.`,
+        actionLabel: "Delete Permanently",
+        isDestructive: true,
+        onConfirm: async () => {
+          await deleteBookmark(id, true);
+        },
+      });
+    } else {
+      deleteBookmark(id, false);
+    }
+  };
+
+  const handleEmptyTrashClick = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Empty Trash?",
+      description: "Are you sure you want to permanently delete all bookmarks in the Trash? This action cannot be undone.",
+      actionLabel: "Empty Trash",
+      isDestructive: true,
+      onConfirm: async () => {
+        await emptyTrash();
+      },
+    });
+  };
+
+  const handleSignOutClick = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Sign Out?",
+      description: "Are you sure you want to sign out of your account?",
+      actionLabel: "Sign Out",
+      isDestructive: false,
+      onConfirm: async () => {
+        await logout();
+      },
+    });
+  };
 
   // Sync viewMode from localStorage
   useEffect(() => {
@@ -265,9 +343,10 @@ export function Dashboard({ user }: DashboardProps) {
         onFilterChange={setActiveFilter}
         onAddFolder={handleAddFolderClick}
         onEditFolder={handleEditFolderClick}
-        onDeleteFolder={deleteFolder}
+        onDeleteFolder={handleDeleteFolderClick}
         isMobileOpen={isMobileSidebarOpen}
         setIsMobileOpen={setIsMobileSidebarOpen}
+        onSignOut={handleSignOutClick}
       />
 
       {/* Main Panel Content */}
@@ -305,7 +384,14 @@ export function Dashboard({ user }: DashboardProps) {
               onValueChange={(val) => setSortBy(val || "date-desc")}
             >
               <SelectTrigger className="w-[150px] rounded-xl border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-                <SelectValue placeholder="Sort bookmarks" />
+                <SelectValue placeholder="Sort bookmarks">
+                  {sortBy === "date-desc" && "Newest Added"}
+                  {sortBy === "date-asc" && "Oldest Added"}
+                  {sortBy === "alpha-asc" && "Title (A-Z)"}
+                  {sortBy === "alpha-desc" && "Title (Z-A)"}
+                  {sortBy === "read-asc" && "Shortest Read"}
+                  {sortBy === "read-desc" && "Longest Read"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -380,13 +466,13 @@ export function Dashboard({ user }: DashboardProps) {
               activeFilterType={activeFilter.type}
               searchQuery={searchQuery}
               onEdit={handleEditBookmarkClick}
-              onDelete={deleteBookmark}
+              onDelete={handleDeleteBookmarkClick}
               onRestore={restoreBookmark}
               onToggleFavorite={handleToggleFavorite}
               onToggleArchived={handleToggleArchived}
               onClearSearch={() => setSearchQuery("")}
               onAddBookmarkClick={handleAddBookmarkClick}
-              onEmptyTrash={emptyTrash}
+              onEmptyTrash={handleEmptyTrashClick}
             />
           )}
         </main>
@@ -407,6 +493,19 @@ export function Dashboard({ user }: DashboardProps) {
         onSave={handleSaveBookmark}
         bookmark={editingBookmark}
         folders={folders}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmConfig.isOpen}
+        onOpenChange={(open) =>
+          setConfirmConfig((prev) => ({ ...prev, isOpen: open }))
+        }
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        actionLabel={confirmConfig.actionLabel}
+        cancelLabel={confirmConfig.cancelLabel}
+        onConfirm={confirmConfig.onConfirm}
+        isDestructive={confirmConfig.isDestructive}
       />
     </div>
   );

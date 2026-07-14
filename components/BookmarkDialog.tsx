@@ -245,7 +245,11 @@ export function BookmarkDialog({
                   disabled={isSubmitting}
                 >
                   <SelectTrigger id="bookmark-folder" className="w-full">
-                    <SelectValue placeholder="Select folder" />
+                    <SelectValue placeholder="Select folder">
+                      {folderId === "none"
+                        ? "None (Root)"
+                        : folders.find((f) => f.id === folderId)?.name}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>

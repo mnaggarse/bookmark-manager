@@ -126,7 +126,11 @@ export function FolderDialog({
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="parent-folder" className="w-full">
-                  <SelectValue placeholder="Select parent folder" />
+                  <SelectValue placeholder="Select parent folder">
+                    {parentId === "none"
+                      ? "None (Root)"
+                      : validParents.find((f) => f.id === parentId)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

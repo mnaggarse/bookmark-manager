@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Folder } from "@/hooks/use-bookmarks";
-import { logout } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { User } from "firebase/auth";
 import {
@@ -48,6 +47,7 @@ interface SidebarProps {
   onDeleteFolder: (id: string) => void;
   isMobileOpen: boolean;
   setIsMobileOpen: (open: boolean) => void;
+  onSignOut: () => void;
 }
 
 export function Sidebar({
@@ -61,6 +61,7 @@ export function Sidebar({
   onDeleteFolder,
   isMobileOpen,
   setIsMobileOpen,
+  onSignOut,
 }: SidebarProps) {
   const [expandedFolders, setExpandedFolders] = useState<
     Record<string, boolean>
@@ -376,7 +377,7 @@ export function Sidebar({
         <Button
           variant="outline"
           className="w-full justify-center gap-2 text-zinc-600 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-400 dark:hover:bg-red-950/20"
-          onClick={() => logout()}
+          onClick={onSignOut}
         >
           <LogOutIcon data-icon="inline-start" />
           Sign Out
