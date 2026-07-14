@@ -24,6 +24,7 @@ import {
   StarIcon,
   TagIcon,
   Trash2Icon,
+  CheckCircle2Icon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookmarkDialog } from "./BookmarkDialog";
@@ -38,7 +39,7 @@ interface DashboardProps {
 }
 
 type FilterType = {
-  type: "all" | "favorite" | "unread" | "trash" | "folder" | "tag";
+  type: "all" | "favorite" | "unread" | "read" | "trash" | "folder" | "tag";
   value: string | null;
 };
 
@@ -236,6 +237,7 @@ export function Dashboard({ user }: DashboardProps) {
     // 2. Feed filter
     if (activeFilter.type === "favorite" && !b.isPinned) return false;
     if (activeFilter.type === "unread" && b.isArchived) return false;
+    if (activeFilter.type === "read" && !b.isArchived) return false;
     if (activeFilter.type === "folder" && b.folderId !== activeFilter.value)
       return false;
     if (
@@ -298,6 +300,12 @@ export function Dashboard({ user }: DashboardProps) {
           title: "Read Later",
           description: "Bookmarks waiting to be read",
           icon: <ClockIcon className="size-5 text-violet-500" />,
+        };
+      case "read":
+        return {
+          title: "Read",
+          description: "Bookmarks you have finished reading",
+          icon: <CheckCircle2Icon className="size-5 text-emerald-500" />,
         };
       case "trash":
         return {

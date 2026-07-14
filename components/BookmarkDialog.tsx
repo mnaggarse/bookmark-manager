@@ -299,21 +299,6 @@ export function BookmarkDialog({
               )}
             </Field>
 
-            <Field className="flex-row items-center justify-between rounded-lg border border-border p-3 dark:border-zinc-800">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Favorite / Pin</span>
-                <span className="text-xs text-zinc-500">
-                  Pin this to the top of your feeds
-                </span>
-              </div>
-              <input
-                type="checkbox"
-                checked={isPinned}
-                onChange={(e) => setIsPinned(e.target.checked)}
-                disabled={isSubmitting}
-                className="size-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800"
-              />
-            </Field>
           </FieldGroup>
 
           <DialogFooter className="gap-2">

@@ -1,18 +1,38 @@
 "use client";
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Bookmark, Folder } from "@/hooks/use-bookmarks";
-import { BookmarkCard } from "./BookmarkCard";
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
-import { BookmarkIcon, InboxIcon, SearchIcon, Trash2Icon, RefreshCwIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Bookmark, Folder } from "@/hooks/use-bookmarks";
+import { cn } from "@/lib/utils";
+import {
+  BookmarkIcon,
+  CheckCircle2Icon,
+  InboxIcon,
+  SearchIcon,
+  Trash2Icon,
+} from "lucide-react";
+import * as React from "react";
+import { BookmarkCard } from "./BookmarkCard";
 
 interface BookmarkListProps {
   bookmarks: Bookmark[];
   folders: Folder[];
   viewMode: "grid" | "list";
-  activeFilterType: "all" | "favorite" | "unread" | "trash" | "folder" | "tag";
+  activeFilterType:
+    | "all"
+    | "favorite"
+    | "unread"
+    | "read"
+    | "trash"
+    | "folder"
+    | "tag";
   searchQuery: string;
   onEdit: (bookmark: Bookmark) => void;
   onDelete: (id: string, permanently: boolean) => void;
@@ -65,6 +85,10 @@ export function BookmarkList({
       title = "No favorites yet";
       desc = "Pin important bookmarks to find them here easily.";
       mediaIcon = <BookmarkIcon className="size-6" />;
+    } else if (activeFilterType === "read") {
+      title = "No read bookmarks yet";
+      desc = "Bookmarks you finish reading will appear here.";
+      mediaIcon = <CheckCircle2Icon className="size-6" />;
     } else if (activeFilterType === "unread") {
       title = "All caught up!";
       desc = "No unread bookmarks in your list.";
@@ -100,7 +124,8 @@ export function BookmarkList({
         <div className="flex items-center justify-between bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/30 p-3 rounded-xl">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-semibold text-red-800 dark:text-red-300">
-              Trash bin contains {bookmarks.length} {bookmarks.length === 1 ? "item" : "items"}.
+              Trash bin contains {bookmarks.length}{" "}
+              {bookmarks.length === 1 ? "item" : "items"}.
             </span>
             <span className="text-[11px] text-red-600 dark:text-red-400">
               Items will remain here until permanently deleted or emptied.
@@ -123,7 +148,7 @@ export function BookmarkList({
         className={cn(
           viewMode === "grid"
             ? "grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
-            : "flex flex-col gap-2.5"
+            : "flex flex-col gap-2.5",
         )}
       >
         {bookmarks.map((bookmark) => (

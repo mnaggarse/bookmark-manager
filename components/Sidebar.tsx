@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { User } from "firebase/auth";
 import {
   BookmarkIcon,
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   ClockIcon,
@@ -35,11 +36,11 @@ interface SidebarProps {
   folders: Folder[];
   tags: string[];
   activeFilter: {
-    type: "all" | "favorite" | "unread" | "trash" | "folder" | "tag";
+    type: "all" | "favorite" | "unread" | "read" | "trash" | "folder" | "tag";
     value: string | null;
   };
   onFilterChange: (filter: {
-    type: "all" | "favorite" | "unread" | "trash" | "folder" | "tag";
+    type: "all" | "favorite" | "unread" | "read" | "trash" | "folder" | "tag";
     value: string | null;
   }) => void;
   onAddFolder: (parentId: string | null) => void;
@@ -152,9 +153,9 @@ export function Sidebar({
           }}
           style={{ paddingLeft: `${level * 12 + 8}px` }}
           className={cn(
-            "group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors cursor-pointer select-none hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-50",
+            "group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors cursor-pointer select-none hover:bg-zinc-900/8 hover:text-zinc-900 dark:hover:bg-zinc-100/8 dark:hover:text-zinc-50",
             isActive
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950"
+              ? "bg-zinc-900/8 dark:bg-zinc-100/8 text-zinc-950 dark:text-zinc-50 font-semibold"
               : "text-zinc-600 dark:text-zinc-400",
           )}
         >
@@ -254,6 +255,7 @@ export function Sidebar({
           { type: "all", label: "All Bookmarks", icon: BookmarkIcon },
           { type: "favorite", label: "Favorites", icon: StarIcon },
           { type: "unread", label: "Read Later", icon: ClockIcon },
+          { type: "read", label: "Read", icon: CheckIcon },
           { type: "trash", label: "Trash", icon: Trash2Icon },
         ].map((item) => {
           const isActive = activeFilter.type === item.type;
@@ -266,10 +268,10 @@ export function Sidebar({
                 setIsMobileOpen(false);
               }}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer select-none",
                 isActive
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-xs"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-50",
+                  : "text-zinc-600 hover:bg-zinc-900/8 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-100/8 dark:hover:text-zinc-50",
               )}
             >
               <Icon className="size-4 shrink-0" />
